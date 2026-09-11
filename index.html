@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Menino ou menina?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#FAF3E7;
+    --card:#FFFCF6;
+    --ink:#3B2A35;
+    --ink-soft:#6B5763;
+    --rose:#D98A94;
+    --rose-deep:#B4606F;
+    --blue:#7C98B3;
+    --blue-deep:#516E8E;
+    --gold:#E3A857;
+    --border:rgba(59,42,53,.14);
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--cream);
+    color:var(--ink);
+    font-family:'Karla',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+  }
+  h1,h2,h3{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    margin:0;
+  }
+  a{color:inherit;}
+  button{font-family:inherit;}
+  :focus-visible{outline:2px solid var(--gold); outline-offset:3px;}
+
+  .wrap{max-width:520px; margin:0 auto; padding:0 20px 80px;}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    position:relative;
+    padding:64px 20px 40px;
+    text-align:center;
+    overflow:hidden;
+  }
+  .blob{
+    position:absolute;
+    border-radius:50%;
+    filter:blur(48px);
+    mix-blend-mode:multiply;
+    opacity:0;
+    transform:scale(.6);
+  }
+  .blob-rose{
+    width:280px; height:280px;
+    background:var(--rose);
+    top:-60px; left:-80px;
+    animation:bloom 1.6s ease-out .1s forwards;
+  }
+  .blob-blue{
+    width:300px; height:300px;
+    background:var(--blue);
+    top:-20px; right:-100px;
+    animation:bloom 1.6s ease-out .35s forwards;
+  }
+  @keyframes bloom{
+    to{opacity:.55; transform:scale(1);}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .blob{animation:none; opacity:.4; transform:scale(1);}
+  }
+
+  .hero-content{position:relative; z-index:1;}
+  .kicker{
+    font-family:'Fraunces',serif;
+    font-style:italic;
+    font-size:1.05rem;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+  .hero h1{
+    font-size:2.5rem;
+    line-height:1.12;
+    letter-spacing:-.01em;
+  }
+  .hero h1 em{font-style:italic; color:var(--rose-deep);}
+  .hero p.sub{
+    margin-top:16px;
+    color:var(--ink-soft);
+    font-size:1.02rem;
+    max-width:38ch;
+    margin-left:auto; margin-right:auto;
+  }
+
+  .date-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    margin-top:26px;
+    padding:10px 20px;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:100px;
+  }
+  .date-badge .day{
+    font-family:'Fraunces',serif;
+    font-size:1.15rem;
+    font-weight:600;
+  }
+  .date-badge .days-left{
+    font-size:.85rem;
+    color:var(--ink-soft);
+    border-left:1px solid var(--border);
+    padding-left:10px;
+  }
+
+  /* ---------- CARD (invitation form) ---------- */
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:18px;
+    padding:32px 26px;
+    margin-top:44px;
+    box-shadow:0 18px 40px -22px rgba(59,42,53,.35);
+  }
+  .card h2{font-size:1.5rem; margin-bottom:6px;}
+  .card .hint{color:var(--ink-soft); font-size:.92rem; margin-bottom:24px;}
+
+  label{
+    display:block;
+    font-size:.88rem;
+    font-weight:600;
+    margin-bottom:6px;
+    margin-top:18px;
+  }
+  label:first-of-type{margin-top:0;}
+  input[type=text], select, textarea{
+    width:100%;
+    padding:12px 14px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:#fff;
+    font-family:'Karla',sans-serif;
+    font-size:.98rem;
+    color:var(--ink);
+  }
+  textarea{resize:vertical; min-height:70px;}
+
+  .guess-toggle{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-top:8px;
+  }
+  .guess-opt{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+    padding:16px 8px;
+    border-radius:12px;
+    border:1.5px solid var(--border);
+    background:#fff;
+    cursor:pointer;
+    transition:border-color .15s, background .15s, transform .1s;
+  }
+  .guess-opt svg{width:30px; height:30px;}
+  .guess-opt span{font-size:.9rem; font-weight:600;}
+  .guess-opt:active{transform:scale(.97);}
+  .guess-opt[data-active="true"].menina{
+    border-color:var(--rose-deep);
+    background:rgba(217,138,148,.14);
+  }
+  .guess-opt[data-active="true"].menino{
+    border-color:var(--blue-deep);
+    background:rgba(124,152,179,.14);
+  }
+  .guess-opt.menina svg{stroke:var(--rose-deep);}
+  .guess-opt.menino svg{stroke:var(--blue-deep);}
+
+  .submit-btn{
+    width:100%;
+    margin-top:26px;
+    padding:14px;
+    border:none;
+    border-radius:100px;
+    background:var(--ink);
+    color:var(--cream);
+    font-size:1rem;
+    font-weight:600;
+    cursor:pointer;
+    transition:background .15s;
+  }
+  .submit-btn:hover{background:var(--rose-deep);}
+  .submit-btn:disabled{opacity:.5; cursor:default;}
+
+  .form-msg{
+    margin-top:14px;
+    font-size:.88rem;
+    text-align:center;
+    min-height:1.2em;
+  }
+  .form-msg.ok{color:var(--rose-deep);}
+  .form-msg.err{color:#a33;}
+
+  /* ---------- TALLY ---------- */
+  .tally{margin-top:52px;}
+  .tally h3{font-size:1.15rem; text-align:center; margin-bottom:18px;}
+  .bar{
+    display:flex;
+    height:22px;
+    border-radius:100px;
+    overflow:hidden;
+    background:var(--border);
+  }
+  .bar-menina{background:var(--rose); transition:width .5s ease;}
+  .bar-menino{background:var(--blue); transition:width .5s ease;}
+  .tally-labels{
+    display:flex;
+    justify-content:space-between;
+    margin-top:10px;
+    font-size:.88rem;
+  }
+  .tally-labels .l-menina{color:var(--rose-deep); font-weight:600;}
+  .tally-labels .l-menino{color:var(--blue-deep); font-weight:600;}
+  .tally-total{
+    text-align:center;
+    margin-top:6px;
+    font-size:.8rem;
+    color:var(--ink-soft);
+  }
+
+  /* ---------- MURAL ---------- */
+  .mural{margin-top:52px;}
+  .mural h3{font-size:1.15rem; text-align:center; margin-bottom:22px;}
+  .mural-grid{
+    display:grid;
+    gap:16px;
+  }
+  .guess-card{
+    position:relative;
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:4px;
+    padding:16px 16px 14px;
+    box-shadow:0 8px 18px -12px rgba(59,42,53,.3);
+  }
+  .guess-card::before{
+    content:"";
+    position:absolute;
+    top:-9px; left:50%;
+    width:54px; height:18px;
+    background:rgba(227,168,87,.55);
+    transform:translateX(-50%) rotate(-2deg);
+  }
+  .guess-card .row1{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    gap:10px;
+  }
+  .guess-card .name{font-family:'Fraunces',serif; font-weight:600; font-size:1.05rem;}
+  .guess-card .relation{font-size:.78rem; color:var(--ink-soft);}
+  .guess-tag{
+    display:inline-block;
+    margin-top:8px;
+    padding:3px 11px;
+    border-radius:100px;
+    font-size:.78rem;
+    font-weight:700;
+  }
+  .guess-tag.menina{background:rgba(217,138,148,.18); color:var(--rose-deep);}
+  .guess-tag.menino{background:rgba(124,152,179,.18); color:var(--blue-deep);}
+  .guess-card .message{
+    margin-top:10px;
+    font-size:.9rem;
+    color:var(--ink-soft);
+    font-style:italic;
+  }
+  .empty-state{
+    text-align:center;
+    color:var(--ink-soft);
+    font-size:.92rem;
+    padding:20px 0;
+  }
+  .loading-state{text-align:center; color:var(--ink-soft); font-size:.9rem;}
+
+  footer{
+    margin-top:60px;
+    text-align:center;
+    font-size:.85rem;
+    color:var(--ink-soft);
+    font-family:'Fraunces',serif;
+    font-style:italic;
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="blob blob-rose"></div>
+  <div class="blob blob-blue"></div>
+  <div class="hero-content">
+    <div class="kicker">Um segredo que está prestes a virar novidade</div>
+    <h1>Vai ser <em>menino</em> ou <em>Serena</em>?</h1>
+    <p class="sub">Só nós ainda não sabemos — mas queremos o seu palpite antes de todo mundo descobrir junto.</p>
+    <div class="date-badge">
+      <span class="day">29 de setembro de 2026</span>
+      <span class="days-left" id="daysLeft"></span>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="card">
+    <h2>Deixe seu palpite</h2>
+    <p class="hint">Conta pra gente quem é você e no que você está apostando.</p>
+
+    <form id="guessForm">
+      <label for="fName">Seu nome</label>
+      <input type="text" id="fName" required maxlength="60" placeholder="Como devemos te chamar?">
+
+      <label for="fRelation">Seu parentesco com o bebê</label>
+      <select id="fRelation" required>
+        <option value="" disabled selected>Escolha uma opção</option>
+        <option>Avó</option>
+        <option>Avô</option>
+        <option>Tia</option>
+        <option>Tio</option>
+        <option>Madrinha</option>
+        <option>Padrinho</option>
+        <option>Prima ou primo</option>
+        <option>Amiga ou amigo</option>
+        <option value="outro">Outro</option>
+      </select>
+      <input type="text" id="fRelationOther" placeholder="Qual?" style="margin-top:8px; display:none;" maxlength="40">
+
+      <label>Seu palpite</label>
+      <div class="guess-toggle">
+        <div class="guess-opt menina" data-value="menina" data-active="false" role="button" tabindex="0">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3c1.8 2 2.6 3.8 2.6 5.2A2.6 2.6 0 1 1 9.4 8.2C9.4 6.8 10.2 5 12 3Z"/>
+            <path d="M12 3c-1.8 2-2.6 3.8-2.6 5.2"/>
+            <circle cx="7" cy="14" r="2.6"/>
+            <circle cx="17" cy="14" r="2.6"/>
+            <circle cx="12" cy="16.5" r="2.6"/>
+          </svg>
+          <span>Serena</span>
+        </div>
+        <div class="guess-opt menino" data-value="menino" data-active="false" role="button" tabindex="0">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3v7"/>
+            <path d="M8.5 6.5 12 3l3.5 3.5"/>
+            <path d="m12 10-6.5 9.5"/>
+            <path d="m12 10 6.5 9.5"/>
+            <path d="M12 10 12 21"/>
+          </svg>
+          <span>Menino</span>
+        </div>
+      </div>
+
+      <label for="fMessage">Um recadinho (opcional)</label>
+      <textarea id="fMessage" maxlength="140" placeholder="Deixe um palpite, uma torcida ou um conselho para os papais"></textarea>
+
+      <button type="submit" class="submit-btn" id="submitBtn">Enviar palpite</button>
+      <div class="form-msg" id="formMsg"></div>
+    </form>
+  </div>
+
+  <div class="tally">
+    <h3>Como está a torcida</h3>
+    <div class="bar">
+      <div class="bar-menina" id="barMenina" style="width:50%"></div>
+      <div class="bar-menino" id="barMenino" style="width:50%"></div>
+    </div>
+    <div class="tally-labels">
+      <span class="l-menina" id="lblMenina">Serena — 0</span>
+      <span class="l-menino" id="lblMenino">Menino — 0</span>
+    </div>
+    <div class="tally-total" id="tallyTotal"></div>
+  </div>
+
+  <div class="mural">
+    <h3>Mural de palpites</h3>
+    <div class="mural-grid" id="muralGrid">
+      <div class="loading-state">Carregando os palpites...</div>
+    </div>
+  </div>
+
+  <footer>Feito com carinho para quem já ama esse bebê antes mesmo de conhecê-lo.</footer>
+</div>
+
+<script>
+  // ---- days left ----
+  const target = new Date(2026, 8, 29);
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const diff = Math.ceil((target - today) / 86400000);
+  document.getElementById('daysLeft').textContent =
+    diff > 0 ? `faltam ${diff} dia${diff === 1 ? '' : 's'}` :
+    diff === 0 ? 'é hoje!' : 'já passou';
+
+  // ---- relation "outro" toggle ----
+  const relationSelect = document.getElementById('fRelation');
+  const relationOther = document.getElementById('fRelationOther');
+  relationSelect.addEventListener('change', () => {
+    relationOther.style.display = relationSelect.value === 'outro' ? 'block' : 'none';
+  });
+
+  // ---- guess toggle ----
+  let selectedGuess = null;
+  const opts = document.querySelectorAll('.guess-opt');
+  opts.forEach(opt => {
+    const activate = () => {
+      opts.forEach(o => o.dataset.active = 'false');
+      opt.dataset.active = 'true';
+      selectedGuess = opt.dataset.value;
+    };
+    opt.addEventListener('click', activate);
+    opt.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); } });
+  });
+
+  // ---- storage helpers ----
+  function hashSeed(str){
+    let h = 0;
+    for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0;
+    return h;
+  }
+
+  async function loadGuesses(){
+    try{
+      const list = await window.storage.list('guess:', true);
+      if (!list || !list.keys || list.keys.length === 0) return [];
+      const entries = await Promise.all(list.keys.map(async k => {
+        try{
+          const r = await window.storage.get(k, true);
+          return r ? JSON.parse(r.value) : null;
+        }catch(e){ return null; }
+      }));
+      return entries.filter(Boolean).sort((a,b) => b.ts - a.ts);
+    }catch(e){
+      console.error('Erro ao carregar palpites', e);
+      return [];
+    }
+  }
+
+  function renderTally(guesses){
+    const meninaCount = guesses.filter(g => g.guess === 'menina').length;
+    const meninoCount = guesses.filter(g => g.guess === 'menino').length;
+    const total = meninaCount + meninoCount;
+    const pMenina = total ? Math.round((meninaCount/total)*100) : 50;
+    const pMenino = total ? 100 - pMenina : 50;
+    document.getElementById('barMenina').style.width = pMenina + '%';
+    document.getElementById('barMenino').style.width = pMenino + '%';
+    document.getElementById('lblMenina').textContent = `Serena — ${meninaCount}`;
+    document.getElementById('lblMenino').textContent = `Menino — ${meninoCount}`;
+    document.getElementById('tallyTotal').textContent =
+      total ? `${total} palpite${total === 1 ? '' : 's'} até agora` : 'Ainda ninguém arriscou um palpite';
+  }
+
+  function renderMural(guesses){
+    const grid = document.getElementById('muralGrid');
+    if (guesses.length === 0){
+      grid.innerHTML = '<div class="empty-state">Nenhum palpite ainda. Seja a primeira pessoa a arriscar!</div>';
+      return;
+    }
+    grid.innerHTML = '';
+    guesses.forEach(g => {
+      const rot = (hashSeed(g.name + g.ts) % 5) - 2;
+      const card = document.createElement('div');
+      card.className = 'guess-card';
+      card.style.transform = `rotate(${rot}deg)`;
+      const safe = s => (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      card.innerHTML = `
+        <div class="row1">
+          <span class="name">${safe(g.name)}</span>
+          <span class="relation">${safe(g.relation)}</span>
+        </div>
+        <span class="guess-tag ${g.guess}">${g.guess === 'menina' ? 'Serena' : 'Menino'}</span>
+        ${g.message ? `<div class="message">“${safe(g.message)}”</div>` : ''}
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  async function refreshAll(){
+    const guesses = await loadGuesses();
+    renderTally(guesses);
+    renderMural(guesses);
+  }
+
+  refreshAll();
+
+  // ---- form submit ----
+  const form = document.getElementById('guessForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const formMsg = document.getElementById('formMsg');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    formMsg.textContent = '';
+    formMsg.className = 'form-msg';
+
+    const name = document.getElementById('fName').value.trim();
+    let relation = relationSelect.value;
+    if (relation === 'outro') relation = relationOther.value.trim() || 'Outro';
+    const message = document.getElementById('fMessage').value.trim();
+
+    if (!name || !relation || !selectedGuess){
+      formMsg.textContent = 'Preencha seu nome, o parentesco e escolha um palpite.';
+      formMsg.className = 'form-msg err';
+      return;
+    }
+
+    if (typeof window.storage === 'undefined'){
+      formMsg.textContent = 'Esse recurso só funciona com o site aberto dentro do Claude (não abrindo o arquivo baixado direto no navegador).';
+      formMsg.className = 'form-msg err';
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Enviando...';
+
+    const entry = { name, relation, guess: selectedGuess, message, ts: Date.now() };
+    const key = `guess:${entry.ts}-${Math.random().toString(36).slice(2,7)}`;
+
+    async function trySave(){
+      const result = await window.storage.set(key, JSON.stringify(entry), true);
+      if (!result) throw new Error('Sem resposta do servidor de armazenamento');
+    }
+
+    try{
+      try{
+        await trySave();
+      }catch(firstErr){
+        // uma segunda tentativa, caso tenha sido uma falha passageira
+        await new Promise(r => setTimeout(r, 700));
+        await trySave();
+      }
+      formMsg.textContent = 'Palpite registrado! Obrigado por participar.';
+      formMsg.className = 'form-msg ok';
+      form.reset();
+      opts.forEach(o => o.dataset.active = 'false');
+      selectedGuess = null;
+      relationOther.style.display = 'none';
+      await refreshAll();
+    }catch(err){
+      console.error(err);
+      const detail = err && err.message ? ` (${err.message})` : '';
+      formMsg.textContent = `Algo deu errado ao salvar seu palpite. Tenta de novo?${detail}`;
+      formMsg.className = 'form-msg err';
+    }finally{
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Enviar palpite';
+    }
+  });
+</script>
+</body>
+</html>

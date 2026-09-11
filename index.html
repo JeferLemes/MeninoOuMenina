@@ -397,7 +397,34 @@
   <footer>Feito com carinho para quem já ama esse bebê antes mesmo de conhecê-lo.</footer>
 </div>
 
-<script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import {
+    getFirestore, collection, addDoc, onSnapshot, query, orderBy
+  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+  // ---- CONFIGURAÇÃO DO FIREBASE ----
+  // Crie um projeto gratuito em https://console.firebase.google.com,
+  // ative o Firestore Database e cole aqui as chaves do seu projeto
+  // (Configurações do projeto > Geral > "Seus apps" > Config).
+  const firebaseConfig = {
+    apiKey: "COLE_AQUI",
+    authDomain: "COLE_AQUI",
+    projectId: "COLE_AQUI",
+    storageBucket: "COLE_AQUI",
+    messagingSenderId: "COLE_AQUI",
+    appId: "COLE_AQUI"
+  };
+
+  const isConfigured = firebaseConfig.apiKey !== "COLE_AQUI";
+
+  const form = document.getElementById('guessForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const formMsg = document.getElementById('formMsg');
+  const relationSelect = document.getElementById('fRelation');
+  const relationOther = document.getElementById('fRelationOther');
+  const opts = document.querySelectorAll('.guess-opt');
+
   // ---- days left ----
   const target = new Date(2026, 8, 29);
   const today = new Date();
@@ -408,15 +435,12 @@
     diff === 0 ? 'é hoje!' : 'já passou';
 
   // ---- relation "outro" toggle ----
-  const relationSelect = document.getElementById('fRelation');
-  const relationOther = document.getElementById('fRelationOther');
   relationSelect.addEventListener('change', () => {
     relationOther.style.display = relationSelect.value === 'outro' ? 'block' : 'none';
   });
 
   // ---- guess toggle ----
   let selectedGuess = null;
-  const opts = document.querySelectorAll('.guess-opt');
   opts.forEach(opt => {
     const activate = () => {
       opts.forEach(o => o.dataset.active = 'false');
@@ -427,28 +451,10 @@
     opt.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); } });
   });
 
-  // ---- storage helpers ----
   function hashSeed(str){
     let h = 0;
     for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0;
     return h;
-  }
-
-  async function loadGuesses(){
-    try{
-      const list = await window.storage.list('guess:', true);
-      if (!list || !list.keys || list.keys.length === 0) return [];
-      const entries = await Promise.all(list.keys.map(async k => {
-        try{
-          const r = await window.storage.get(k, true);
-          return r ? JSON.parse(r.value) : null;
-        }catch(e){ return null; }
-      }));
-      return entries.filter(Boolean).sort((a,b) => b.ts - a.ts);
-    }catch(e){
-      console.error('Erro ao carregar palpites', e);
-      return [];
-    }
   }
 
   function renderTally(guesses){
@@ -490,77 +496,67 @@
     });
   }
 
-  async function refreshAll(){
-    const guesses = await loadGuesses();
-    renderTally(guesses);
-    renderMural(guesses);
-  }
-
-  refreshAll();
-
-  // ---- form submit ----
-  const form = document.getElementById('guessForm');
-  const submitBtn = document.getElementById('submitBtn');
-  const formMsg = document.getElementById('formMsg');
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    formMsg.textContent = '';
-    formMsg.className = 'form-msg';
-
-    const name = document.getElementById('fName').value.trim();
-    let relation = relationSelect.value;
-    if (relation === 'outro') relation = relationOther.value.trim() || 'Outro';
-    const message = document.getElementById('fMessage').value.trim();
-
-    if (!name || !relation || !selectedGuess){
-      formMsg.textContent = 'Preencha seu nome, o parentesco e escolha um palpite.';
-      formMsg.className = 'form-msg err';
-      return;
-    }
-
-    if (typeof window.storage === 'undefined'){
-      formMsg.textContent = 'Esse recurso só funciona com o site aberto dentro do Claude (não abrindo o arquivo baixado direto no navegador).';
-      formMsg.className = 'form-msg err';
-      return;
-    }
-
+  if (!isConfigured){
+    document.getElementById('muralGrid').innerHTML =
+      '<div class="empty-state">O site ainda não está conectado a um banco de dados, então os palpites não podem ser salvos. Configure o Firebase no código (veja o comentário no topo do script) para habilitar.</div>';
+    renderTally([]);
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Enviando...';
+    submitBtn.textContent = 'Configuração pendente';
+  } else {
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const guessesRef = collection(db, 'guesses');
 
-    const entry = { name, relation, guess: selectedGuess, message, ts: Date.now() };
-    const key = `guess:${entry.ts}-${Math.random().toString(36).slice(2,7)}`;
+    onSnapshot(query(guessesRef, orderBy('ts', 'desc')), snapshot => {
+      const guesses = snapshot.docs.map(d => d.data());
+      renderTally(guesses);
+      renderMural(guesses);
+    }, err => {
+      console.error('Erro ao carregar palpites', err);
+      document.getElementById('muralGrid').innerHTML =
+        '<div class="empty-state">Não foi possível carregar os palpites agora.</div>';
+    });
 
-    async function trySave(){
-      const result = await window.storage.set(key, JSON.stringify(entry), true);
-      if (!result) throw new Error('Sem resposta do servidor de armazenamento');
-    }
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      formMsg.textContent = '';
+      formMsg.className = 'form-msg';
 
-    try{
-      try{
-        await trySave();
-      }catch(firstErr){
-        // uma segunda tentativa, caso tenha sido uma falha passageira
-        await new Promise(r => setTimeout(r, 700));
-        await trySave();
+      const name = document.getElementById('fName').value.trim();
+      let relation = relationSelect.value;
+      if (relation === 'outro') relation = relationOther.value.trim() || 'Outro';
+      const message = document.getElementById('fMessage').value.trim();
+
+      if (!name || !relation || !selectedGuess){
+        formMsg.textContent = 'Preencha seu nome, o parentesco e escolha um palpite.';
+        formMsg.className = 'form-msg err';
+        return;
       }
-      formMsg.textContent = 'Palpite registrado! Obrigado por participar.';
-      formMsg.className = 'form-msg ok';
-      form.reset();
-      opts.forEach(o => o.dataset.active = 'false');
-      selectedGuess = null;
-      relationOther.style.display = 'none';
-      await refreshAll();
-    }catch(err){
-      console.error(err);
-      const detail = err && err.message ? ` (${err.message})` : '';
-      formMsg.textContent = `Algo deu errado ao salvar seu palpite. Tenta de novo?${detail}`;
-      formMsg.className = 'form-msg err';
-    }finally{
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Enviar palpite';
-    }
-  });
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Enviando...';
+
+      const entry = { name, relation, guess: selectedGuess, message, ts: Date.now() };
+
+      try{
+        await addDoc(guessesRef, entry);
+        formMsg.textContent = 'Palpite registrado! Obrigado por participar.';
+        formMsg.className = 'form-msg ok';
+        form.reset();
+        opts.forEach(o => o.dataset.active = 'false');
+        selectedGuess = null;
+        relationOther.style.display = 'none';
+      }catch(err){
+        console.error(err);
+        const detail = err && err.message ? ` (${err.message})` : '';
+        formMsg.textContent = `Algo deu errado ao salvar seu palpite. Tenta de novo?${detail}`;
+        formMsg.className = 'form-msg err';
+      }finally{
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Enviar palpite';
+      }
+    });
+  }
 </script>
 </body>
 </html>

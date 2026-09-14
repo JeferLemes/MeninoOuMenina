@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Menino ou menina?</title>
+<title>Leonardo ou Serena?</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -13,10 +13,10 @@
     --card:#FFFCF6;
     --ink:#3B2A35;
     --ink-soft:#6B5763;
-    --rose:#D98A94;
-    --rose-deep:#B4606F;
-    --blue:#7C98B3;
-    --blue-deep:#516E8E;
+    --rose:#F0A38A;
+    --rose-deep:#D97C55;
+    --blue:#A8D5BA;
+    --blue-deep:#5C9873;
     --gold:#E3A857;
     --border:rgba(59,42,53,.14);
   }
@@ -89,7 +89,9 @@
     line-height:1.12;
     letter-spacing:-.01em;
   }
-  .hero h1 em{font-style:italic; color:var(--rose-deep);}
+  .hero h1 em{font-style:italic;}
+  .hero h1 em.c-leo{color:var(--blue-deep);}
+  .hero h1 em.c-serena{color:var(--rose-deep);}
   .hero p.sub{
     margin-top:16px;
     color:var(--ink-soft);
@@ -118,6 +120,34 @@
     color:var(--ink-soft);
     border-left:1px solid var(--border);
     padding-left:10px;
+  }
+
+  .venue{
+    margin-top:12px;
+    font-size:.88rem;
+    color:var(--ink-soft);
+    letter-spacing:.01em;
+  }
+  .venue svg{
+    width:13px; height:13px;
+    stroke:var(--ink-soft);
+    fill:none;
+    stroke-width:1.8;
+    vertical-align:-1px;
+    margin-right:4px;
+  }
+
+  .birth-note{
+    margin-top:24px;
+    font-family:'Fraunces',serif;
+    font-style:italic;
+    font-size:1.02rem;
+    color:var(--ink-soft);
+  }
+  .birth-note strong{
+    color:var(--ink);
+    font-style:normal;
+    font-weight:600;
   }
 
   /* ---------- CARD (invitation form) ---------- */
@@ -308,11 +338,15 @@
   <div class="blob blob-blue"></div>
   <div class="hero-content">
     <div class="kicker">Um segredo que está prestes a virar novidade</div>
-    <h1>Vai ser <em>menino</em> ou <em>Serena</em>?</h1>
+    <h1>Vai ser <em class="c-leo">Leonardo</em> ou <em class="c-serena">Serena</em>?</h1>
     <p class="sub">Só nós ainda não sabemos — mas queremos o seu palpite antes de todo mundo descobrir junto.</p>
+    <p class="birth-note">Chegarei ao mundo em <strong id="birthCountdown">...</strong></p>
     <div class="date-badge">
       <span class="day">29 de setembro de 2026</span>
       <span class="days-left" id="daysLeft"></span>
+    </div>
+    <div class="venue">
+      <svg viewBox="0 0 24 24"><path d="M12 21s-7-6.5-7-12a7 7 0 1 1 14 0c0 5.5-7 12-7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg>Edifício Brickell
     </div>
   </div>
 </div>
@@ -362,7 +396,7 @@
             <path d="m12 10 6.5 9.5"/>
             <path d="M12 10 12 21"/>
           </svg>
-          <span>Menino</span>
+          <span>Leonardo</span>
         </div>
       </div>
 
@@ -382,7 +416,7 @@
     </div>
     <div class="tally-labels">
       <span class="l-menina" id="lblMenina">Serena — 0</span>
-      <span class="l-menino" id="lblMenino">Menino — 0</span>
+      <span class="l-menino" id="lblMenino">Leonardo — 0</span>
     </div>
     <div class="tally-total" id="tallyTotal"></div>
   </div>
@@ -397,27 +431,7 @@
   <footer>Feito com carinho para quem já ama esse bebê antes mesmo de conhecê-lo.</footer>
 </div>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-  import {
-    getFirestore, collection, addDoc, onSnapshot, query, orderBy
-  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-
-  // ---- CONFIGURAÇÃO DO FIREBASE ----
-  // Crie um projeto gratuito em https://console.firebase.google.com,
-  // ative o Firestore Database e cole aqui as chaves do seu projeto
-  // (Configurações do projeto > Geral > "Seus apps" > Config).
-  const firebaseConfig = {
-    apiKey: "COLE_AQUI",
-    authDomain: "COLE_AQUI",
-    projectId: "COLE_AQUI",
-    storageBucket: "COLE_AQUI",
-    messagingSenderId: "COLE_AQUI",
-    appId: "COLE_AQUI"
-  };
-
-  const isConfigured = firebaseConfig.apiKey !== "COLE_AQUI";
-
+<script>
   const form = document.getElementById('guessForm');
   const submitBtn = document.getElementById('submitBtn');
   const formMsg = document.getElementById('formMsg');
@@ -433,6 +447,17 @@
   document.getElementById('daysLeft').textContent =
     diff > 0 ? `faltam ${diff} dia${diff === 1 ? '' : 's'}` :
     diff === 0 ? 'é hoje!' : 'já passou';
+
+  // ---- previsão de nascimento (dias) ----
+  const birthTarget = new Date(2027, 3, 3); // 3 de abril de 2027
+  const birthDiffMs = birthTarget - new Date();
+  const birthEl = document.getElementById('birthCountdown');
+  if (birthDiffMs > 0){
+    const birthDays = Math.ceil(birthDiffMs / 86400000);
+    birthEl.textContent = `${birthDays} dia${birthDays === 1 ? '' : 's'}`;
+  } else {
+    birthEl.textContent = 'a partir de agora!';
+  }
 
   // ---- relation "outro" toggle ----
   relationSelect.addEventListener('change', () => {
@@ -466,7 +491,7 @@
     document.getElementById('barMenina').style.width = pMenina + '%';
     document.getElementById('barMenino').style.width = pMenino + '%';
     document.getElementById('lblMenina').textContent = `Serena — ${meninaCount}`;
-    document.getElementById('lblMenino').textContent = `Menino — ${meninoCount}`;
+    document.getElementById('lblMenino').textContent = `Leonardo — ${meninoCount}`;
     document.getElementById('tallyTotal').textContent =
       total ? `${total} palpite${total === 1 ? '' : 's'} até agora` : 'Ainda ninguém arriscou um palpite';
   }
@@ -489,74 +514,76 @@
           <span class="name">${safe(g.name)}</span>
           <span class="relation">${safe(g.relation)}</span>
         </div>
-        <span class="guess-tag ${g.guess}">${g.guess === 'menina' ? 'Serena' : 'Menino'}</span>
-        ${g.message ? `<div class="message">“${safe(g.message)}”</div>` : ''}
+        <span class="guess-tag ${g.guess}">${g.guess === 'menina' ? 'Serena' : 'Leonardo'}</span>
       `;
       grid.appendChild(card);
     });
   }
 
-  if (!isConfigured){
-    document.getElementById('muralGrid').innerHTML =
-      '<div class="empty-state">O site ainda não está conectado a um banco de dados, então os palpites não podem ser salvos. Configure o Firebase no código (veja o comentário no topo do script) para habilitar.</div>';
-    renderTally([]);
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Configuração pendente';
-  } else {
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const guessesRef = collection(db, 'guesses');
-
-    onSnapshot(query(guessesRef, orderBy('ts', 'desc')), snapshot => {
-      const guesses = snapshot.docs.map(d => d.data());
+  async function loadGuesses(){
+    try{
+      const res = await fetch('/api/guesses');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const guesses = await res.json();
       renderTally(guesses);
       renderMural(guesses);
-    }, err => {
+    }catch(err){
       console.error('Erro ao carregar palpites', err);
       document.getElementById('muralGrid').innerHTML =
         '<div class="empty-state">Não foi possível carregar os palpites agora.</div>';
-    });
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      formMsg.textContent = '';
-      formMsg.className = 'form-msg';
-
-      const name = document.getElementById('fName').value.trim();
-      let relation = relationSelect.value;
-      if (relation === 'outro') relation = relationOther.value.trim() || 'Outro';
-      const message = document.getElementById('fMessage').value.trim();
-
-      if (!name || !relation || !selectedGuess){
-        formMsg.textContent = 'Preencha seu nome, o parentesco e escolha um palpite.';
-        formMsg.className = 'form-msg err';
-        return;
-      }
-
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Enviando...';
-
-      const entry = { name, relation, guess: selectedGuess, message, ts: Date.now() };
-
-      try{
-        await addDoc(guessesRef, entry);
-        formMsg.textContent = 'Palpite registrado! Obrigado por participar.';
-        formMsg.className = 'form-msg ok';
-        form.reset();
-        opts.forEach(o => o.dataset.active = 'false');
-        selectedGuess = null;
-        relationOther.style.display = 'none';
-      }catch(err){
-        console.error(err);
-        const detail = err && err.message ? ` (${err.message})` : '';
-        formMsg.textContent = `Algo deu errado ao salvar seu palpite. Tenta de novo?${detail}`;
-        formMsg.className = 'form-msg err';
-      }finally{
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Enviar palpite';
-      }
-    });
+    }
   }
+
+  loadGuesses();
+  // atualiza sozinho a cada 8s, para os palpites de outros convidados aparecerem sem precisar recarregar
+  setInterval(loadGuesses, 8000);
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    formMsg.textContent = '';
+    formMsg.className = 'form-msg';
+
+    const name = document.getElementById('fName').value.trim();
+    let relation = relationSelect.value;
+    if (relation === 'outro') relation = relationOther.value.trim() || 'Outro';
+    const message = document.getElementById('fMessage').value.trim();
+
+    if (!name || !relation || !selectedGuess){
+      formMsg.textContent = 'Preencha seu nome, o parentesco e escolha um palpite.';
+      formMsg.className = 'form-msg err';
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Enviando...';
+
+    const entry = { name, relation, guess: selectedGuess, message };
+
+    try{
+      const res = await fetch('/api/guesses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entry)
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      formMsg.textContent = 'Palpite registrado! Obrigado por participar.';
+      formMsg.className = 'form-msg ok';
+      form.reset();
+      opts.forEach(o => o.dataset.active = 'false');
+      selectedGuess = null;
+      relationOther.style.display = 'none';
+      await loadGuesses();
+    }catch(err){
+      console.error(err);
+      const detail = err && err.message ? ` (${err.message})` : '';
+      formMsg.textContent = `Algo deu errado ao salvar seu palpite. Tenta de novo?${detail}`;
+      formMsg.className = 'form-msg err';
+    }finally{
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Enviar palpite';
+    }
+  });
 </script>
 </body>
 </html>

@@ -13,11 +13,9 @@ export default async function handler(req, res) {
   }
 
   const providedKey = req.headers['x-admin-key'];
-  const adminKey = process.env.ADMIN_KEY;
+  // Se não encontrar no painel da Vercel, usa a senha definida abaixo:
+  const adminKey = process.env.ADMIN_KEY || 'revelacao2026';
 
-  if (!adminKey) {
-    return res.status(500).json({ error: 'ADMIN_KEY não configurada no projeto.' });
-  }
   if (!providedKey || providedKey !== adminKey) {
     return res.status(401).json({ error: 'Senha incorreta.' });
   }

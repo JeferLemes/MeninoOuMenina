@@ -70,7 +70,7 @@
   .summary{
     display:flex;
     gap:14px;
-    margin-bottom:30px;
+    margin-bottom:20px;
   }
   .summary .box{
     flex:1;
@@ -84,6 +84,27 @@
   .summary .box.menina .n{color:var(--rose-deep);}
   .summary .box.menino .n{color:var(--blue-deep);}
   .summary .box .label{font-size:.82rem; color:var(--ink-soft);}
+
+  .top-actions{
+    display:flex;
+    justify-content:flex-end;
+    margin-bottom:16px;
+  }
+  .btn-clear-all{
+    background:transparent;
+    border:1px solid rgba(163,51,51,0.3);
+    color:#a33;
+    padding:6px 14px;
+    border-radius:100px;
+    font-size:.78rem;
+    font-weight:600;
+    cursor:pointer;
+    transition:all 0.2s;
+  }
+  .btn-clear-all:hover{
+    background:#a33;
+    color:#fff;
+  }
 
   .list{display:flex; flex-direction:column; gap:12px;}
   .entry{
@@ -107,7 +128,31 @@
   .tag.menino{background:rgba(168,213,186,.35); color:var(--blue-deep);}
   .entry .message{margin-top:10px; font-size:.92rem; color:var(--ink); font-style:italic;}
   .entry .no-message{margin-top:10px; font-size:.85rem; color:var(--ink-soft);}
-  .entry .time{margin-top:8px; font-size:.75rem; color:var(--ink-soft);}
+  
+  .entry .bottom-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:12px;
+    padding-top:8px;
+    border-top:1px dashed rgba(59,42,53,.08);
+  }
+  .entry .time{font-size:.75rem; color:var(--ink-soft);}
+  .btn-delete{
+    background:transparent;
+    border:none;
+    color:var(--ink-soft);
+    font-size:.78rem;
+    cursor:pointer;
+    padding:2px 6px;
+    border-radius:6px;
+    transition:color 0.2s;
+  }
+  .btn-delete:hover{
+    color:#a33;
+    text-decoration:underline;
+  }
+
   .empty{text-align:center; color:var(--ink-soft); padding:30px 0;}
   .loading{text-align:center; color:var(--ink-soft); padding:30px 0;}
 </style>
@@ -138,6 +183,11 @@
         <div class="label">Leonardo</div>
       </div>
     </div>
+
+    <div class="top-actions">
+      <button class="btn-clear-all" onclick="clearAllGuesses()">🔥 Limpar todos os testes</button>
+    </div>
+
     <div class="list" id="list">
       <div class="loading">Carregando...</div>
     </div>
@@ -173,7 +223,10 @@
         </div>
         <span class="tag ${g.guess}">${g.guess === 'menina' ? 'Serena' : 'Leonardo'}</span>
         ${g.message ? `<div class="message">“${safe(g.message)}”</div>` : '<div class="no-message">Sem recado</div>'}
-        <div class="time">${fmtDate(g.ts)}</div>
+        <div class="bottom-row">
+          <span class="time">${fmtDate(g.ts)}</span>
+          <button class="btn-delete" onclick="deleteGuess(${g.ts})">🗑️ Excluir</button>
+        </div>
       </div>
     `).join('');
   }
@@ -185,6 +238,45 @@
       throw new Error(body.error || `Erro ${res.status}`);
     }
     return res.json();
+  }
+
+  async function deleteGuess(ts){
+    if (!confirm('Deseja realmente apagar este palpite?')) return;
+    const password = sessionStorage.getItem('revelacao_admin_key');
+    try {
+      const res = await fetch('/api/guesses-admin', {
+        method: 'DELETE',
+        headers: {
+          'x-admin-key': password,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ ts })
+      });
+      if (!res.ok) throw new Error('Erro ao apagar');
+      const guesses = await tryLoad(password);
+      renderList(guesses);
+    } catch(err) {
+      alert('Não foi possível apagar o palpite.');
+    }
+  }
+
+  async function clearAllGuesses(){
+    if (!confirm('ATENÇÃO: Tem certeza que deseja apagar TODOS os palpites da lista?')) return;
+    const password = sessionStorage.getItem('revelacao_admin_key');
+    try {
+      const res = await fetch('/api/guesses-admin', {
+        method: 'DELETE',
+        headers: {
+          'x-admin-key': password,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ clearAll: true })
+      });
+      if (!res.ok) throw new Error('Erro ao apagar todos');
+      renderList([]);
+    } catch(err) {
+      alert('Não foi possível apagar a lista.');
+    }
   }
 
   async function attemptLogin(password){
@@ -212,7 +304,6 @@
     if (e.key === 'Enter' && pwInput.value.trim()) attemptLogin(pwInput.value.trim());
   });
 
-  // se já entrou antes nesta aba/sessão, não pede a senha de novo
   const savedKey = sessionStorage.getItem('revelacao_admin_key');
   if (savedKey) attemptLogin(savedKey);
 </script>

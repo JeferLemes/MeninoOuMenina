@@ -45,7 +45,7 @@
   /* ---------- HERO ---------- */
   .hero{
     position:relative;
-    padding:64px 20px 40px;
+    padding:48px 20px 10px; /* Espaçamento inferior reduzido */
     text-align:center;
     overflow:hidden;
   }
@@ -100,11 +100,18 @@
     margin-left:auto; margin-right:auto;
   }
 
+  .presence-note{
+    margin-top:20px;
+    font-size:.95rem;
+    color:var(--ink);
+    font-weight:500;
+  }
+
   .date-badge{
     display:inline-flex;
     align-items:center;
     gap:10px;
-    margin-top:26px;
+    margin-top:12px;
     padding:10px 20px;
     background:var(--card);
     border:1px solid var(--border);
@@ -138,7 +145,7 @@
   }
 
   .birth-note{
-    margin-top:24px;
+    margin-top:20px;
     font-family:'Fraunces',serif;
     font-style:italic;
     font-size:1.02rem;
@@ -156,7 +163,7 @@
     border:1px solid var(--border);
     border-radius:18px;
     padding:32px 26px;
-    margin-top:44px;
+    margin-top:20px; /* Reduzido de 44px para aproximar do Hero */
     box-shadow:0 18px 40px -22px rgba(59,42,53,.35);
   }
   .card h2{font-size:1.5rem; margin-bottom:6px;}
@@ -329,6 +336,12 @@
     font-family:'Fraunces',serif;
     font-style:italic;
   }
+  footer .by-dad{
+    font-size:.75rem;
+    margin-top:6px;
+    opacity:0.75;
+    font-style:normal;
+  }
 </style>
 </head>
 <body>
@@ -339,14 +352,17 @@
   <div class="hero-content">
     <div class="kicker">Um segredo que está prestes a virar novidade</div>
     <h1>Vai ser <em class="c-leo">Leonardo</em> ou <em class="c-serena">Serena</em>?</h1>
-    <p class="sub">Só nós ainda não sabemos — mas queremos o seu palpite antes de todo mundo descobrir junto.</p>
-    <p class="birth-note">Chegarei ao mundo em <strong id="birthCountdown">...</strong></p>
+    <p class="sub">Ainda não sabemos - mas queremos o seu palpite antes de todo mundo descobrir junto.</p>
+    <p class="birth-note">Chegarei ao mundo em aproximadamente <strong id="birthCountdown">...</strong></p>
+    
+    <p class="presence-note">Esperamos a sua presença - ela é de extrema importância para nós</p>
+    
     <div class="date-badge">
       <span class="day">29 de setembro de 2026</span>
       <span class="days-left" id="daysLeft"></span>
     </div>
     <div class="venue">
-      <svg viewBox="0 0 24 24"><path d="M12 21s-7-6.5-7-12a7 7 0 1 1 14 0c0 5.5-7 12-7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg>Edifício Brickell
+      <svg viewBox="0 0 24 24"><path d="M12 21s-7-6.5-7-12a7 7 0 1 1 14 0c0 5.5-7 12-7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg>Local: Edifício Brickell
     </div>
   </div>
 </div>
@@ -368,8 +384,6 @@
         <option>Avô</option>
         <option>Tia</option>
         <option>Tio</option>
-        <option>Madrinha</option>
-        <option>Padrinho</option>
         <option>Prima ou primo</option>
         <option>Amiga ou amigo</option>
         <option value="outro">Outro</option>
@@ -400,7 +414,7 @@
         </div>
       </div>
 
-      <label for="fMessage">Um recadinho (opcional)</label>
+      <label for="fMessage">Um recadinho para Eduarda e Jeferson (opcional)</label>
       <textarea id="fMessage" maxlength="140" placeholder="Deixe um palpite, uma torcida ou um conselho para os papais"></textarea>
 
       <button type="submit" class="submit-btn" id="submitBtn">Enviar palpite</button>
@@ -428,7 +442,10 @@
     </div>
   </div>
 
-  <footer>Feito com carinho para quem já ama esse bebê antes mesmo de conhecê-lo.</footer>
+  <footer>
+    Feito com carinho para quem já ama esse bebê antes mesmo de conhecê-lo.
+    <div class="by-dad">By: Papai do bebê</div>
+  </footer>
 </div>
 
 <script>
@@ -535,7 +552,6 @@
   }
 
   loadGuesses();
-  // atualiza sozinho a cada 8s, para os palpites de outros convidados aparecerem sem precisar recarregar
   setInterval(loadGuesses, 8000);
 
   form.addEventListener('submit', async (e) => {

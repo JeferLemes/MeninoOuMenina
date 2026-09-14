@@ -1,1 +1,52 @@
 
+import { kv } from '@vercel/kv';
+
+const LIST_KEY = 'revelacao:guesses';
+
+export default async function handler(req, res) {
+  if (req.method === 'GET') {
+    try {
+      const raw = await kv.lrange(LIST_KEY, 0, -1) || [];
+      const guesses = raw
+        .map(item => {
+          try { return typeof item === 'string' ? JSON.parse(item) : item; }
+          catch { return null; }
+        })
+        .filter(Boolean)
+        .reverse()
+        // a rota pública não devolve o recado — isso é exclusivo da área dos pais
+        .map(({ message, ...rest }) => rest);
+      return res.status(200).json(guesses);
+    } catch (err) {
+      console.error('Erro ao ler palpites:', err);
+      return res.status(500).json({ error: 'Não foi possível carregar os palpites.' });
+    }
+  }
+
+  if (req.method === 'POST') {
+    try {
+      const { name, relation, guess, message } = req.body || {};
+
+      if (!name || !relation || !guess || (guess !== 'menina' && guess !== 'menino')) {
+        return res.status(400).json({ error: 'Dados incompletos ou inválidos.' });
+      }
+
+      const entry = {
+        name: String(name).slice(0, 60),
+        relation: String(relation).slice(0, 40),
+        guess,
+        message: message ? String(message).slice(0, 140) : '',
+        ts: Date.now()
+      };
+
+      await kv.rpush(LIST_KEY, JSON.stringify(entry));
+      return res.status(200).json({ ok: true });
+    } catch (err) {
+      console.error('Erro ao salvar palpite:', err);
+      return res.status(500).json({ error: 'Não foi possível salvar o palpite.' });
+    }
+  }
+
+  res.setHeader('Allow', ['GET', 'POST']);
+  return res.status(405).json({ error: 'Método não permitido.' });
+}
